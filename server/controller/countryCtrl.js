@@ -2,7 +2,14 @@ import { sequelize } from "../models/init-models";
 
 const findAll = async (req, res) => {
   try {
-    const country = await req.context.models.countries.findAll();
+    const country = await req.context.models.countries.findAll({
+      include: [
+        {
+          model: req.context.models.locations,
+          as: "locations",
+        },
+      ],
+    });
     return res.send(country);
   } catch (error) {
     return res.status(404).send(error);
@@ -20,17 +27,34 @@ const findOne = async (req, res) => {
   }
 };
 const create = async (req, res) => {
+  const cekReg = req.regions;
   try {
     const country = await req.context.models.countries.create({
-      country_id: req.body.country_id,
       country_name: req.body.country_name,
-      region_id: req.body.region_id,
+      country_id: req.body.country_id,
+      region_id: cekReg.region_id,
     });
     return res.send(country);
   } catch (error) {
     return res.status(404).send(error);
   }
 };
+
+const createNext = async (req, res, next) => {
+  
+  try {
+    const country = await req.context.models.countries.create({
+      country_name: req.body.country_name,
+      country_id: req.body.country_id,
+      region_id: req.body.region_id,
+    });
+    req.countries = country;
+    next();
+  } catch (error) {
+    return res.status(404).send(error);
+  }
+};
+
 const update = async (req, res) => {
   try {
     const country = await req.context.models.countries.update(
@@ -80,6 +104,7 @@ export default {
   findAll,
   findOne,
   create,
+  createNext,
   update,
   deleted,
   querySQL,

@@ -2,7 +2,14 @@ import { sequelize } from "../models/init-models";
 
 const findAll = async (req, res) => {
   try {
-    const department = await req.context.models.departments.findAll();
+    const department = await req.context.models.departments.findAll({
+     
+      include: [
+        {
+          all: true,
+        },
+      ],
+    });
     return res.send(department);
   } catch (error) {
     return res.status(404).send(error);
@@ -19,17 +26,34 @@ const findOne = async (req, res) => {
   }
 };
 const create = async (req, res) => {
+  const cekLocation = req.locations;
   try {
     const department = await req.context.models.departments.create({
       department_id: req.body.department_id,
       department_name: req.body.department_name,
-      location_id: req.body.location_id,
+      location_id: cekLocation.location_id,
     });
     return res.send(department);
   } catch (error) {
     return res.status(404).send(error);
   }
 };
+
+const createNext = async (req, res, next) => {
+ 
+  try {
+    const department = await req.context.models.departments.create({
+      department_id: req.body.department_id,
+      department_name: req.body.department_name,
+      location_id: req.body.location_id,
+    });
+    req.departments = department;
+    next();
+  } catch (error) {
+    return res.status(404).send(error);
+  }
+};
+
 const update = async (req, res) => {
   try {
     const department = await req.context.models.departments.update(
@@ -56,7 +80,7 @@ const deleted = async (req, res) => {
     return res.status(404).send(error);
   }
 };
-// select query
+
 const querySQL = async (req, res) => {
   try {
     await sequelize
@@ -76,6 +100,7 @@ export default {
   findAll,
   findOne,
   create,
+  createNext,
   update,
   deleted,
   querySQL,
